@@ -17,7 +17,7 @@ local timetot = 0
 local timetrgt = 30
 
 
-aerotest.maxeagle = 10 -- max possible eagles at one time in AOSR
+aerotest.maxeagle = 2 -- max possible eagles at one time in AOSR
 
 
 -- add function to remember previously taken decisions
@@ -199,7 +199,10 @@ function aerotest.hq_climb(self,prty)
                 local pitch = 8
                 local roll = 6
                 local acc = 1.2
-                roll = (max(left,right)/30 *3)+(down/100)*3+roll
+                --roll = (max(left,right)/30 *3)+(down/100)*3+roll
+				roll = (max(left,right)/30 * 7.5)
+				lift = lift + down/500
+				pitch = pitch + down/500
 --                lift = lift + (down/200) - (up/200)
                 local turn = chose_turn(self,left,right)
                 if turn then
@@ -239,9 +242,10 @@ function aerotest.hq_glide(self,prty)
             if left > 3 or right > 3 then
 				local lift = 0.6
                 local pitch = 8
-                local roll = 6
+                local roll = 0
                 local acc = 1.2
-                roll = (max(left,right)/30 *3)+(down/100)*3+roll
+                --roll = (max(left,right)/30 *3)+(down/100)*3+roll
+				roll = (max(left,right)/30 *7.5)
                 local turn = chose_turn(self,left,right)
                 if turn then
                     mobkit.clear_queue_low(self)
@@ -285,7 +289,7 @@ function aerotest.hq_idle(self,prty)
 						found = true
 					else
 						if step > 1 then
-							startangle = startangle - rad(10*(step+1)/2) -- find the center of a gap
+							startangle = startangle - rad(10*(step+1)/2) -- find the center of the gap
 							break
 						end
 						found = false
@@ -301,7 +305,7 @@ function aerotest.hq_idle(self,prty)
 						local obj = minetest.add_entity(pos2, "aerotest:pos")
 						minetest.after(10, function(obj) obj:remove() end, obj)
 					end
-					while not mobkit.turn2yaw(self,startangle,1200) do local dummy = random() end
+					while not mobkit.turn2yaw(self,startangle,rad(0.5)) do local dummy = random() end
 					-- TAKEOFF
 					aerotest.hq_takeoff(self,startangle,prty)
 					return true
@@ -319,17 +323,30 @@ end
 function aerotest.hq_takeoff(self,startangle,prty,yforce)
 	local func = function(self)
 		if not yforce then yforce = 8 end
-		if mobkit.timer(self,2) then
+		self.object:set_yaw(startangle)
+		if mobkit.timer(self,1) then
 			mobkit.clear_queue_low(self)
 			self.action = "takeoff"
-			mobkit.animate(self,"start")
 			local pos = mobkit.get_stand_pos(self) 
-			local yaw = self.object:get_yaw()
-			tvec = mobkit.pos_shift(mobkit.pos_translate2d(pos,startangle,4),{y=yforce})
-			--minetest.chat_send_all(dump(vector.subtract(tvec,pos)))
-			self.object:add_velocity(vector.subtract(tvec,pos))
-			aerotest.hq_climb(self,prty)
-			return true
+			if self.isonground or self.isinliquid then
+				local tpos = pos
+				mobkit.remember(self,"tpos",pos)
+				mobkit.animate(self,"start")
+				pos = mobkit.pos_translate2d(pos,startangle,4)
+				self.object:add_velocity({x=0,y=yforce,z=0})
+				self.object:set_yaw(startangle)
+			else
+				local rpos = mobkit.recall(self,"tpos")
+				local vdist = vector.distance(rpos,pos)
+				--minetest.chat_send_all(dump(vdist))
+				if vdist > 10 then
+					mobkit.forget(self,"tpos")
+					aerotest.hq_climb(self,prty)
+					return true
+				end
+			end
+			
+			aerotest.lq_fly_pitch(self,1.8,25,0,1.4,'fly')
 		end
 	end
 	mobkit.queue_high(self,func,prty)
@@ -432,6 +449,8 @@ minetest.register_chatcommand("eagle", {
                 local pos3 = vector.subtract(pos2,pos)
                 pos3.y = 4
                 obj:set_velocity(pos3)
+			elseif obj and action == "idle" then
+				obj:set_yaw(rad(math.random(360)))
             end
         end
 		return true
