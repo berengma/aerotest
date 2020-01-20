@@ -268,6 +268,7 @@ function aerotest.hq_idle(self,prty)
 			self.action = "idle"
             
 			local pos = mobkit.get_stand_pos(self) --self.object:get_pos()
+			pos.y = pos.y + 0.5
 			local yaw = self.object:get_yaw()
 			local startangle = 0
 			local found = false
