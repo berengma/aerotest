@@ -201,8 +201,8 @@ function aerotest.hq_climb(self,prty)
                 local acc = 1.2
                 --roll = (max(left,right)/30 *3)+(down/100)*3+roll
 				roll = (max(left,right)/30 * 7.5)
-				lift = lift + down/500
-				pitch = pitch + down/500
+				lift = lift + (down - up) /500
+				pitch = pitch + (down - up) /500
 --                lift = lift + (down/200) - (up/200)
                 local turn = chose_turn(self,left,right)
                 if turn then
@@ -214,7 +214,7 @@ function aerotest.hq_climb(self,prty)
                 end
             end
 		end
-		if mobkit.timer(self,15) and not remember then mobkit.clear_queue_low(self) end
+		if mobkit.timer(self,15) then mobkit.clear_queue_low(self) end
 		if mobkit.is_queue_empty_low(self) then aerotest.lq_fly_pitch(self,0.6,8,(random(2)-1.5)*30,1.2,'fly') end 
 	end
 	mobkit.queue_high(self,func,prty)
@@ -279,9 +279,8 @@ function aerotest.hq_idle(self,prty)
 				local step = 0
 				for angle = 0,359,10 do
 					startangle = yaw + rad(angle)
-					local pos3 = mobkit.pos_translate2d(pos,startangle,20)
-					pos2 = mobkit.pos_shift(pos3,{y=4})
-					pos3 = mobkit.pos_translate2d(pos,startangle,10)
+					local pos2 = mobkit.pos_translate2d(pos,startangle,20)
+					pos2 = mobkit.pos_shift(pos2,{y=6})
 					if not water_life.find_collision(pos,pos2,true) --[[and not water_life.find_collision(pos,pos3,true)]] then
 						if found then
 							step = step + 1
@@ -339,7 +338,7 @@ function aerotest.hq_takeoff(self,startangle,prty,yforce)
 				local rpos = mobkit.recall(self,"tpos")
 				local vdist = vector.distance(rpos,pos)
 				--minetest.chat_send_all(dump(vdist))
-				if vdist > 10 then
+				if vdist > 8 then
 					mobkit.forget(self,"tpos")
 					aerotest.hq_climb(self,prty)
 					return true
@@ -360,10 +359,17 @@ minetest.register_entity('aerotest:eagle',{
 	visual_size = {x = 3, y = 3},
 	mesh = "aerotest_eagle.b3d",
 	textures = {"aerotest_eagle.png"},
-	
-	timeout=86400,	-- 24h
+	makes_footstep_sound = false,
+	timeout=120,	-- 24h
 	buoyancy = 0.7,
-	static_save = true,                                      
+	static_save = true, 
+	view_range = AOSR,
+	max_hp = 100,
+    owner = "",                                       
+    drops = {
+		{name = "default:diamond", chance = 20, min = 1, max = 1,},		
+		{name = "water_life:meat_raw", chance = 2, min = 1, max = 1,},
+	},                                       
 	animation = {
         idle={range={x=0,y=89},speed=20,loop=true},	
         start={range={x=90,y=163},speed=20,loop=false},
@@ -372,14 +378,22 @@ minetest.register_entity('aerotest:eagle',{
 		glide={range={x=165,y=185},speed=20,loop=true},
 		},
 	action = "idle",
+    attack={range=0.8,damage_groups={fleshy=7}},                                       
 
 on_step = mobkit.stepfunc,
+on_activate=mobkit.actfunc,
+get_staticdata = mobkit.statfunc,                                          
 
 logic = function(self)
 	if mobkit.timer(self,1) then
-		if vector.length(self.object:get_velocity()) < 2 and self.action ~= "idle" then self.object:remove() end
+		if vector.length(self.object:get_velocity()) < 2 and self.action ~= "idle" then --[[self.object:remove() end]]
+			mobkit.clear_queue_low(self)
+			mobkit.clear_queue_high(self)
+			mobkit.hurt(self,10)
+			aerotest.hq_idle(self,1)
+		end
+                                           
 	end
-	--minetest.chat_send_all(dump(self.action))
 	if mobkit.is_queue_empty_high(self) then 
 		if self.action == "idle" then
 			if self.isinliquid then
@@ -395,10 +409,19 @@ logic = function(self)
 		end
 	end
 end,
+                                           
+on_punch=function(self, puncher, time_from_last_punch, tool_capabilities, dir)
+		if mobkit.is_alive(self) then
+            
+            
+            if not puncher or not puncher:is_player() then return end
+            
+                mobkit.hurt(self,tool_capabilities.damage_groups.fleshy or 1)
 
-on_activate=mobkit.actfunc,
+		end
+	end,                                           
 
-get_staticdata = mobkit.statfunc,
+
 
 })
 
