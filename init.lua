@@ -404,7 +404,7 @@ function aerotest.hq_roam(self,prty)
 					local pos2 = mobkit.pos_shift(mobkit.pos_translate2d(pos,startangle,2),{y=2})
 					mobkit.lq_turn2pos(self,pos2)
 					-- TAKEOFF
-					self.object:set_velocity(mobkit.pos_shift(vector.subtract(pos2,pos),{y=3}))
+					self.object:set_velocity(mobkit.pos_shift(vector.subtract(pos2,pos),{y=5}))
 					return true
 			end
 		end
