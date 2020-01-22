@@ -15,10 +15,57 @@ local min = math.min
 
 local timetot = 0
 local timetrgt = 30
+local spawntimer = 0
 
 
 aerotest.maxeagle = 2 -- max possible eagles at one time in AOSR
+aerotest.spawnchance = 10 -- spawnchance in percent
 
+
+local function spawnstep(dtime)
+
+    spawntimer = spawntimer + dtime
+    if spawntimer > 5 then
+        
+        for _,plyr in ipairs(minetest.get_connected_players()) do
+          local coin = math.random(100)
+		  if coin < aerotest.spawnchance then
+            if plyr  then	
+        
+                local pos = plyr:get_pos()
+                local yaw = plyr:get_look_horizontal()
+                local animal = water_life.count_objects(pos,nil,"aerotest:eagle")
+				local radius = (water_life.abr * 12) - 1                                           -- 75% from 16 = 12 nodes
+                radius = math.random(7,radius)
+                local angel = math.random() * rad(65)                                                -- look for random angel 0 - 65 degrees
+                if water_life.leftorright() then yaw = yaw + angel else yaw = yaw - angel end       -- add or substract to/from yaw
+                local fpos = mobkit.pos_translate2d(pos,yaw,radius)
+				
+                --minetest.chat_send_all("Y = "..dump(minetest.pos_to_string(fpos)).."   eagles: "..dump(animal.name))
+                if animal.name < aerotest.maxeagle and fpos.y > 50 then
+					local pos1 = mobkit.pos_shift(fpos,{x=-8,z=-8})
+					local pos2 = mobkit.pos_shift(fpos,{x=8,y=16,z=8})
+					local nodes = minetest.find_nodes_in_area_under_air(pos1, pos2, {"group:stone","group:tree","group:leaves"})
+					 --minetest.chat_send_all("Found "..dump(#nodes).." nodes under air")
+					 
+					if #nodes > 0 then 
+						local spawnpos = mobkit.pos_shift(nodes[math.random(#nodes)],{y=2})
+						local obj = minetest.add_entity(spawnpos, "aerotest:eagle")
+					end
+				end
+					
+			end
+		  end
+        end
+        spawntimer = 0
+	end
+end
+
+--
+--spawnit !!
+minetest.register_globalstep(spawnstep)
+--
+--
 
 -- add function to remember previously taken decisions
 local function chose_turn(self,a,b)
@@ -185,7 +232,7 @@ function aerotest.hq_climb(self,prty)
 		if mobkit.timer(self,1) then
 			local remember = mobkit.recall(self,"time")
             if remember then
-                if self.time_total - remember > 59 then
+                if self.time_total - remember > 15 then
                     mobkit.forget(self,"turn")
                     mobkit.forget(self,"time")
                     
@@ -233,7 +280,7 @@ function aerotest.hq_glide(self,prty)
 			self.action = "glide"
             local remember = mobkit.recall(self,"time")
             if remember then
-                if self.time_total - remember > 59 then
+                if self.time_total - remember > 15 then
                     mobkit.forget(self,"turn")
                     mobkit.forget(self,"time")
                     
@@ -366,6 +413,7 @@ function aerotest.hq_roam(self,prty)
 		if self.isinliquid then return true end
 		if mobkit.is_queue_empty_low(self) and self.isonground then
 			local pos = mobkit.get_stand_pos(self)
+			pos.y = pos.y + 0.5
 			local check = mobkit.recall(self,"target")
 			if check then
 				local dist = vector.distance(check,pos)
@@ -376,7 +424,7 @@ function aerotest.hq_roam(self,prty)
 			end
 			local yaw = self.object:get_yaw()
 			local yawstep = rad(30)
-			local left, right, up, down, under, above = water_life.radar(pos,yaw,30,true)
+			local left, right, up, down, under, above = water_life.radar(pos,yaw,20,true)
 			if chose_turn(self,left,right) then
 				yaw = yaw + yawstep
 			else
@@ -536,7 +584,7 @@ end
 minetest.register_chatcommand("eagle", {
 	params = "<action>",
 	description = "Spawn an eagle   idle to spawn a sitting one",
-	privs = {interact = true},
+	privs = {server = true},
 	func = function(name, action)
 		local player = minetest.get_player_by_name(name)
 		if not player then return false end
@@ -544,7 +592,7 @@ minetest.register_chatcommand("eagle", {
 		local yaw = player:get_look_horizontal()
         pos.y = pos.y + 1
 		local pos2 = mobkit.pos_translate2d(pos,yaw,3)
-        if iseagle(pos) < aerotest.maxeagle then
+        if iseagle(pos) < aerotest.maxeagle + 1 then
             local obj = minetest.add_entity(pos2, "aerotest:eagle")
             if obj and action ~= "idle" then
                 local pos3 = vector.subtract(pos2,pos)
