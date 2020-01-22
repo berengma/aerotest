@@ -183,7 +183,14 @@ end
 function aerotest.hq_climb(self,prty)
 	local func=function(self)
 		if mobkit.timer(self,1) then
-			
+			local remember = mobkit.recall(self,"time")
+            if remember then
+                if self.time_total - remember > 59 then
+                    mobkit.forget(self,"turn")
+                    mobkit.forget(self,"time")
+                    
+                end
+            end
 			self.action = "fly"
 			local pos = self.object:get_pos()
 			local yaw = self.object:get_yaw()
@@ -201,8 +208,8 @@ function aerotest.hq_climb(self,prty)
                 local acc = 1.2
                 --roll = (max(left,right)/30 *3)+(down/100)*3+roll
 				roll = (max(left,right)/30 * 7.5)
-				lift = lift + (down - up) /500
-				pitch = pitch + (down - up) /500
+				lift = lift + (down - up) /400
+				pitch = pitch + (down - up) /400
 --                lift = lift + (down/200) - (up/200)
                 local turn = chose_turn(self,left,right)
                 if turn then
@@ -341,7 +348,6 @@ function aerotest.hq_takeoff(self,startangle,prty,yforce)
 			else
 				local rpos = mobkit.recall(self,"tpos") or pos
 				local vdist = vector.distance(rpos,pos)
-				--minetest.chat_send_all(dump(vdist))
 				if vdist > 8 then
 					mobkit.forget(self,"tpos")
 					aerotest.hq_climb(self,prty)
@@ -357,56 +363,34 @@ end
 
 function aerotest.hq_roam(self,prty)
 	local func=function(self)
-		if mobkit.timer(self,1) then
-			self.action = "roam"
-            
-			local pos = mobkit.get_stand_pos(self) 
-			pos.y = pos.y + 0.5
-			local startangel = self.object:get_yaw()
-			local pos2 = {}
-			local step =0
-			mobkit.animate(self,"idle")
-			local counter = 10
-			
-			while counter > 0 and not found do
-				for angle = 0,359,10 do
-						startangle = startangel + rad(angle)
-						local pos2 = mobkit.pos_translate2d(pos,startangle,counter)
-						pos2 = mobkit.pos_shift(pos2,{y=2})
-						if not water_life.find_collision(pos,pos2,true) --[[and not water_life.find_collision(pos,pos3,true)]] then
-							if found then
-								step = step + 1
-							end
-							found = true
-						else
-							if step > 1 then
-								startangle = startangle - rad(10*(step+1)/2) -- find the center of the gap
-								break
-							end
-							found = false
-						end
-				end
-				counter = counter -1
-			end
-			if not found and water_life.radar_debug then 
-					minetest.chat_send_all("Nothing Found !")
-			end
-			if not found then
-				startangel = rad(math.random(360))
-				found = true
-			end
-			if found then
-				if water_life.radar_debug then
-						local pos3 = mobkit.pos_shift(mobkit.pos_translate2d(pos,startangle,2),{y=2})
-						local obj = minetest.add_entity(pos3, "aerotest:pos")
-						minetest.after(10, function(obj) obj:remove() end, obj)
-				end
-					local pos2 = mobkit.pos_shift(mobkit.pos_translate2d(pos,startangle,2),{y=2})
-					mobkit.lq_turn2pos(self,pos2)
-					-- TAKEOFF
-					self.object:set_velocity(mobkit.pos_shift(vector.subtract(pos2,pos),{y=5}))
+		if self.isinliquid then return true end
+		if mobkit.is_queue_empty_low(self) and self.isonground then
+			local pos = mobkit.get_stand_pos(self)
+			local check = mobkit.recall(self,"target")
+			if check then
+				local dist = vector.distance(check,pos)
+				if dist < 2 then
+					mobkit.forget(self,"target")
 					return true
+				end
 			end
+			local yaw = self.object:get_yaw()
+			local yawstep = rad(30)
+			local left, right, up, down, under, above = water_life.radar(pos,yaw,30,true)
+			if chose_turn(self,left,right) then
+				yaw = yaw + yawstep
+			else
+				yaw = yaw - yawstep
+			end
+			local tpos = mobkit.pos_translate2d(pos,yaw,1)
+			mobkit.remember(self,"target",tpos)
+			local height = 2
+			if above < 3 then
+				height = 0
+			else
+				mobkit.animate(self,"start")
+			end
+			mobkit.dumbstep(self,height,tpos,0.3,0.3) 
 		end
 	end
 	mobkit.queue_high(self,func,prty)
@@ -415,7 +399,7 @@ end
 minetest.register_entity('aerotest:eagle',{
 
 	physical = true,
-	collisionbox = {-0.3,0,-0.3,0.3,1,0.3},
+	collisionbox = {-0.49,0,-0.49,0.49,0.99,0.49},
 	visual = "mesh",
 	visual_size = {x = 3, y = 3},
 	mesh = "aerotest_eagle.b3d",
@@ -426,7 +410,8 @@ minetest.register_entity('aerotest:eagle',{
 	static_save = true, 
 	view_range = AOSR,
 	max_hp = 100,
-	jump_height = 3,
+	max_speed = 1,
+	jump_height = 1,
     owner = "",                                       
     drops = {
 		{name = "default:diamond", chance = 10, min = 1, max = 1,},		
@@ -434,7 +419,7 @@ minetest.register_entity('aerotest:eagle',{
 	},                                       
 	animation = {
         idle={range={x=0,y=89},speed=20,loop=true},	
-        start={range={x=90,y=163},speed=10,loop=false},
+        start={range={x=90,y=127},speed=40,loop=true},
         land={range={x=142,y=90},speed=-10,loop=false},
 		fly={range={x=143,y=163},speed=20,loop=true},	
 		glide={range={x=165,y=185},speed=20,loop=true},
