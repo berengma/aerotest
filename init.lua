@@ -23,7 +23,7 @@ aerotest.maxeagle = 2 -- max possible eagles at one time in AOSR
 aerotest.spawnchance = 20 -- spawnchance in percent
 
 
-
+-- find the position with highest y value
 local function cleanup(nodes)
 	if not nodes or #nodes<2 then return end
 	local score = 0
@@ -34,6 +34,9 @@ local function cleanup(nodes)
 	return nodes
 end
 
+
+
+-- spawn function
 local function spawnstep(dtime)
 
     spawntimer = spawntimer + dtime
@@ -79,6 +82,8 @@ minetest.register_globalstep(spawnstep)
 --
 --
 
+
+-- is takeoff possible
 local function find_takeoff(self)
 	local pos = mobkit.get_stand_pos(self) --self.object:get_pos()
 			pos.y = pos.y + 0.5
@@ -108,7 +113,7 @@ local function find_takeoff(self)
 				end
 				found = found and not water_life.find_collision(pos,mobkit.pos_shift(pos,{y=4}),true)  -- check overhead
 			
-			return found
+			return found,startangle,pos2
 end
 
 
@@ -146,6 +151,7 @@ local function chose_turn(self,a,b)
 end
 
 
+-- ask Termos what these functions do
 local function pitchroll2pitchyaw(aoa,roll)
 	if roll == 0.0 then return aoa,0 end 
 	-- assumed vector x=0,y=0,z=1
@@ -272,6 +278,9 @@ function aerotest.lq_fly_pitch(self,lift,pitch,roll,acc,anim)
 	mobkit.queue_low(self,func)
 end
 
+
+-- back to my code
+-- hq functions self explaining
 function aerotest.hq_climb(self,prty)
 	local func=function(self)
 		if mobkit.timer(self,1) then
@@ -373,7 +382,7 @@ function aerotest.hq_idle(self,prty,now)
 			local found = false
 			local pos2 = {}
 			mobkit.animate(self,"idle")
-			local wait = 1--math.random(10) + 5
+			local wait = math.random(10) + 5
 			
 			if mobkit.timer(self,wait) or now then
 				local step = 0
@@ -517,7 +526,7 @@ function aerotest.hq_wayout(self,prty)
 	mobkit.queue_high(self,func,prty)
 end
 
-
+-- not in use atm
 function aerotest.hq_roam(self,prty)
 	local func=function(self)
 		if self.isinliquid then return true end
@@ -556,6 +565,8 @@ function aerotest.hq_roam(self,prty)
 	mobkit.queue_high(self,func,prty)
 end
 
+
+-- the eagle itself
 minetest.register_entity('aerotest:eagle',{
 
 	physical = true,
@@ -663,6 +674,7 @@ on_punch=function(self, puncher, time_from_last_punch, tool_capabilities, dir)
 
 })
 
+-- entity for showing positions in debug
 minetest.register_entity("aerotest:pos", {
 	initial_properties = {
 		visual = "cube",
