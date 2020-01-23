@@ -15,9 +15,106 @@ local min = math.min
 
 local timetot = 0
 local timetrgt = 30
+local spawntimer = 0
 
 
+aerotest.eagleminheight = 50
 aerotest.maxeagle = 2 -- max possible eagles at one time in AOSR
+aerotest.spawnchance = 20 -- spawnchance in percent
+
+
+-- find the position with highest y value
+local function cleanup(nodes)
+	if not nodes or #nodes<2 then return end
+	local score = 0
+	
+	for i = #nodes,2,-1 do
+		if nodes[i].y >= nodes[i-1].y then table.remove(nodes,i-1) end
+	end
+	return nodes
+end
+
+
+
+-- spawn function
+local function spawnstep(dtime)
+
+    spawntimer = spawntimer + dtime
+    if spawntimer > 5 then
+        
+        for _,plyr in ipairs(minetest.get_connected_players()) do
+          local coin = math.random(100)
+		  if coin < aerotest.spawnchance then
+            if plyr and plyr:get_pos().y > aerotest.eagleminheight -16 and plyr:get_pos().y < 500 then	
+        
+                local pos = plyr:get_pos()
+                local yaw = plyr:get_look_horizontal()
+                local animal = water_life.count_objects(pos,nil,"aerotest:eagle")
+				local radius = (water_life.abr * 12) - 1                                           -- 75% from 16 = 12 nodes
+                radius = math.random(7,radius)
+                local angel = math.random() * rad(65)                                                -- look for random angel 0 - 65 degrees
+                if water_life.leftorright() then yaw = yaw + angel else yaw = yaw - angel end       -- add or substract to/from yaw
+                local fpos = mobkit.pos_translate2d(pos,yaw,radius)
+				
+                --minetest.chat_send_all("Y = "..dump(minetest.pos_to_string(fpos)).."   eagles: "..dump(animal.name))
+                if animal.name < aerotest.maxeagle and fpos.y > aerotest.eagleminheight-16 then
+					local pos1 = mobkit.pos_shift(fpos,{x=-8,y=-AOSR,z=-8})
+					local pos2 = mobkit.pos_shift(fpos,{x=8,y=AOSR,z=8})
+					local nodes = minetest.find_nodes_in_area_under_air(pos1, pos2, {"group:stone","group:tree","group:leaves"})
+					nodes = cleanup(nodes)
+					
+					if nodes and #nodes > 0 then 
+						local spawnpos = mobkit.pos_shift(nodes[math.random(#nodes)],{y=2})
+						local obj = minetest.add_entity(spawnpos, "aerotest:eagle")
+					end
+				end
+					
+			end
+		  end
+        end
+        spawntimer = 0
+	end
+end
+
+--
+--spawnit !!
+minetest.register_globalstep(spawnstep)
+--
+--
+
+
+-- is takeoff possible
+local function find_takeoff(self)
+	local pos = mobkit.get_stand_pos(self) --self.object:get_pos()
+			pos.y = pos.y + 0.5
+			local yaw = self.object:get_yaw()
+			local startangle = 0
+			local found = false
+			local pos2 = {}
+			
+				local step = 0
+				for angle = 0,359,10 do
+					startangle = yaw + rad(angle)
+					local pos2 = mobkit.pos_translate2d(pos,startangle,20)
+					pos2 = mobkit.pos_shift(pos2,{y=6})
+					if not water_life.find_collision(pos,pos2,true) then
+						if found then
+							step = step + 1
+						end
+						found = true
+					else
+						if step > 1 then
+							startangle = startangle - rad(10*(step+1)/2) -- find the center of the gap
+							break
+						end
+						found = false
+					end
+					--minetest.chat_send_all("Found = "..dump(found).."   Angle = "..dump(startangle).."    Pos = "..minetest.pos_to_string(pos2))
+				end
+				found = found and not water_life.find_collision(pos,mobkit.pos_shift(pos,{y=4}),true)  -- check overhead
+			
+			return found,startangle,pos2
+end
 
 
 -- add function to remember previously taken decisions
@@ -54,6 +151,7 @@ local function chose_turn(self,a,b)
 end
 
 
+-- ask Termos what these functions do
 local function pitchroll2pitchyaw(aoa,roll)
 	if roll == 0.0 then return aoa,0 end 
 	-- assumed vector x=0,y=0,z=1
@@ -180,10 +278,20 @@ function aerotest.lq_fly_pitch(self,lift,pitch,roll,acc,anim)
 	mobkit.queue_low(self,func)
 end
 
+
+-- back to my code
+-- hq functions self explaining
 function aerotest.hq_climb(self,prty)
 	local func=function(self)
 		if mobkit.timer(self,1) then
-			
+			local remember = mobkit.recall(self,"time")
+            if remember then
+                if self.time_total - remember > 15 then
+                    mobkit.forget(self,"turn")
+                    mobkit.forget(self,"time")
+                    
+                end
+            end
 			self.action = "fly"
 			local pos = self.object:get_pos()
 			local yaw = self.object:get_yaw()
@@ -201,8 +309,8 @@ function aerotest.hq_climb(self,prty)
                 local acc = 1.2
                 --roll = (max(left,right)/30 *3)+(down/100)*3+roll
 				roll = (max(left,right)/30 * 7.5)
-				lift = lift + (down - up) /500
-				pitch = pitch + (down - up) /500
+				lift = lift + (down - up) /400
+				pitch = pitch + (down - up) /400
 --                lift = lift + (down/200) - (up/200)
                 local turn = chose_turn(self,left,right)
                 if turn then
@@ -226,7 +334,7 @@ function aerotest.hq_glide(self,prty)
 			self.action = "glide"
             local remember = mobkit.recall(self,"time")
             if remember then
-                if self.time_total - remember > 59 then
+                if self.time_total - remember > 15 then
                     mobkit.forget(self,"turn")
                     mobkit.forget(self,"time")
                     
@@ -315,7 +423,7 @@ function aerotest.hq_idle(self,prty,now)
 					aerotest.hq_takeoff(self,yaw,prty,12)
 					return true
 				else
-					aerotest.hq_roam(self,prty+1)
+					aerotest.hq_wayout(self,prty+1)
 				end
 			end
 		end
@@ -341,7 +449,6 @@ function aerotest.hq_takeoff(self,startangle,prty,yforce)
 			else
 				local rpos = mobkit.recall(self,"tpos") or pos
 				local vdist = vector.distance(rpos,pos)
-				--minetest.chat_send_all(dump(vdist))
 				if vdist > 8 then
 					mobkit.forget(self,"tpos")
 					aerotest.hq_climb(self,prty)
@@ -355,67 +462,115 @@ function aerotest.hq_takeoff(self,startangle,prty,yforce)
 	mobkit.queue_high(self,func,prty)
 end
 
+
+function aerotest.hq_wayout(self,prty)
+	local func=function(self)
+		if self.isinliquid then return true end
+		if mobkit.timer(self,1) then
+			if mobkit.is_queue_empty_low(self) and self.isonground then
+				local pos = mobkit.get_stand_pos(self)
+				pos.y = pos.y + 0.5
+				local yaw = self.object:get_yaw()
+				local yawstep = 10
+				local left, right, up, down, under, above = water_life.radar(pos,yaw,2,true)
+				local tgtyaw = {score=0,yaw=rad(0),dist=0}
+				local score = 0
+				local forward =  10
+				local a = 0
+				local g = 0
+				
+				for round = 0,359,yawstep do
+					
+						local ground = mobkit.pos_translate2d(pos,rad(round),forward)
+						local angled = mobkit.pos_shift(mobkit.pos_translate2d(pos,rad(round),forward),{y=forward*2})
+						g = water_life.find_collision(pos,ground,true) or forward
+						a = water_life.find_collision(pos,angled,true) or forward
+						
+						--minetest.chat_send_all("-G : "..dump(g).."   -A : "..dump(a).."   Score : "..dump(score).."   above = "..dump(above))
+						
+						score = g + a
+						
+						if score > 0 then
+							if tgtyaw.score < score then
+								tgtyaw.score = score
+								tgtyaw.yaw = rad(round)
+								tgtyaw.dist = g
+								score = 0
+							end
+						end
+					
+				end
+				local go = mobkit.pos_translate2d(pos,tgtyaw.yaw,tgtyaw.dist)
+				--[[
+				if go then 
+					mobkit.lq_turn2pos(self,go)
+					mobkit.animate(self,"start")
+					local kick = vector.subtract(go,pos)
+					kick = {x= kick.x, y= above+2, z= kick.z}
+					self.object:set_velocity(kick)
+				end
+				]]
+				
+				if go then
+					if above < 2 then
+						mobkit.dumbstep(self,0,go,1,2)
+					else
+						mobkit.animate(self,"start")
+						mobkit.dumbstep(self,1,go,1,2)
+					end
+				end
+			end
+		end
+		if find_takeoff(self) then return true end
+	end
+	mobkit.queue_high(self,func,prty)
+end
+
+-- not in use atm
 function aerotest.hq_roam(self,prty)
 	local func=function(self)
-		if mobkit.timer(self,1) then
-			self.action = "roam"
-            
-			local pos = mobkit.get_stand_pos(self) 
+		if self.isinliquid then return true end
+		if mobkit.is_queue_empty_low(self) and self.isonground then
+			local pos = mobkit.get_stand_pos(self)
 			pos.y = pos.y + 0.5
-			local startangel = self.object:get_yaw()
-			local pos2 = {}
-			local step =0
-			mobkit.animate(self,"idle")
-			local counter = 10
-			
-			while counter > 0 and not found do
-				for angle = 0,359,10 do
-						startangle = startangel + rad(angle)
-						local pos2 = mobkit.pos_translate2d(pos,startangle,counter)
-						pos2 = mobkit.pos_shift(pos2,{y=2})
-						if not water_life.find_collision(pos,pos2,true) --[[and not water_life.find_collision(pos,pos3,true)]] then
-							if found then
-								step = step + 1
-							end
-							found = true
-						else
-							if step > 1 then
-								startangle = startangle - rad(10*(step+1)/2) -- find the center of the gap
-								break
-							end
-							found = false
-						end
-				end
-				counter = counter -1
-			end
-			if not found and water_life.radar_debug then 
-					minetest.chat_send_all("Nothing Found !")
-			end
-			if not found then
-				startangel = rad(math.random(360))
-				found = true
-			end
-			if found then
-				if water_life.radar_debug then
-						local pos3 = mobkit.pos_shift(mobkit.pos_translate2d(pos,startangle,2),{y=2})
-						local obj = minetest.add_entity(pos3, "aerotest:pos")
-						minetest.after(10, function(obj) obj:remove() end, obj)
-				end
-					local pos2 = mobkit.pos_shift(mobkit.pos_translate2d(pos,startangle,2),{y=2})
-					mobkit.lq_turn2pos(self,pos2)
-					-- TAKEOFF
-					self.object:set_velocity(mobkit.pos_shift(vector.subtract(pos2,pos),{y=5}))
+			local check = mobkit.recall(self,"target")
+			if check then
+				local dist = vector.distance(check,pos)
+				if dist < 2 then
+					mobkit.forget(self,"target")
 					return true
+				end
+			end
+			local yaw = self.object:get_yaw()
+			local yawstep = rad(30)
+			local left, right, up, down, under, above = water_life.radar(pos,yaw,20,true)
+			if chose_turn(self,left,right) then
+				yaw = yaw + yawstep
+			else
+				yaw = yaw - yawstep
+			end
+			local tpos = mobkit.pos_translate2d(pos,yaw,1)
+			mobkit.remember(self,"target",tpos)
+			local height = 2
+			if above < 3 then
+				height = 0
+			else
+				mobkit.animate(self,"start")
+			end
+			if height and tpos then
+				mobkit.dumbstep(self,height,tpos,1,2) 
 			end
 		end
 	end
 	mobkit.queue_high(self,func,prty)
 end
 
+
+-- the eagle itself
 minetest.register_entity('aerotest:eagle',{
 
 	physical = true,
-	collisionbox = {-0.3,0,-0.3,0.3,1,0.3},
+	collisionbox = {-0.3,0,-0.3,0.3,0.8,0.3},
 	visual = "mesh",
 	visual_size = {x = 3, y = 3},
 	mesh = "aerotest_eagle.b3d",
@@ -426,7 +581,8 @@ minetest.register_entity('aerotest:eagle',{
 	static_save = true, 
 	view_range = AOSR,
 	max_hp = 100,
-	jump_height = 3,
+	max_speed = 1,
+	jump_height = 2,
     owner = "",                                       
     drops = {
 		{name = "default:diamond", chance = 10, min = 1, max = 1,},		
@@ -434,7 +590,7 @@ minetest.register_entity('aerotest:eagle',{
 	},                                       
 	animation = {
         idle={range={x=0,y=89},speed=20,loop=true},	
-        start={range={x=90,y=163},speed=10,loop=false},
+        start={range={x=90,y=127},speed=40,loop=true},
         land={range={x=142,y=90},speed=-10,loop=false},
 		fly={range={x=143,y=163},speed=20,loop=true},	
 		glide={range={x=165,y=185},speed=20,loop=true},
@@ -518,6 +674,7 @@ on_punch=function(self, puncher, time_from_last_punch, tool_capabilities, dir)
 
 })
 
+-- entity for showing positions in debug
 minetest.register_entity("aerotest:pos", {
 	initial_properties = {
 		visual = "cube",
@@ -551,7 +708,7 @@ end
 minetest.register_chatcommand("eagle", {
 	params = "<action>",
 	description = "Spawn an eagle   idle to spawn a sitting one",
-	privs = {interact = true},
+	privs = {server = true},
 	func = function(name, action)
 		local player = minetest.get_player_by_name(name)
 		if not player then return false end
@@ -559,7 +716,7 @@ minetest.register_chatcommand("eagle", {
 		local yaw = player:get_look_horizontal()
         pos.y = pos.y + 1
 		local pos2 = mobkit.pos_translate2d(pos,yaw,3)
-        if iseagle(pos) < aerotest.maxeagle then
+        if iseagle(pos) < aerotest.maxeagle + 1 then
             local obj = minetest.add_entity(pos2, "aerotest:eagle")
             if obj and action ~= "idle" then
                 local pos3 = vector.subtract(pos2,pos)
