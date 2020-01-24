@@ -48,17 +48,17 @@ local function spawnstep(dtime)
                 local pos = plyr:get_pos()
                 local yaw = plyr:get_look_horizontal()
                 local animal = water_life.count_objects(pos,nil,"aerotest:eagle")
-				local radius = (water_life.abr * 12) - 1                                           -- 75% from 16 = 12 nodes
-                radius = math.random(7,radius)
-                local angel = math.random() * rad(65)                                                -- look for random angel 0 - 65 degrees
+				local radius = (water_life.abr * 12) - 8                                           -- 75% from 16 = 12 nodes
+                radius = math.random(7,7+radius)
+                local angel = math.random() * rad(55)                                                -- look for random angel 0 - 55 degrees
                 if water_life.leftorright() then yaw = yaw + angel else yaw = yaw - angel end       -- add or substract to/from yaw
                 local fpos = mobkit.pos_translate2d(pos,yaw,radius)
 				
                 --minetest.chat_send_all("Y = "..dump(minetest.pos_to_string(fpos)).."   eagles: "..dump(animal.name))
                 if animal.name < aerotest.maxeagle and fpos.y > aerotest.eagleminheight-16 then
-					local pos1 = mobkit.pos_shift(fpos,{x=-8,y=-AOSR,z=-8})
-					local pos2 = mobkit.pos_shift(fpos,{x=8,y=AOSR,z=8})
-					local nodes = minetest.find_nodes_in_area_under_air(pos1, pos2, {"group:stone","group:tree","group:leaves"})
+					local pos1 = mobkit.pos_shift(fpos,{x=-2,y=-AOSR/2,z=-2})
+					local pos2 = mobkit.pos_shift(fpos,{x=2,y=AOSR/2,z=2})
+					local nodes = minetest.find_nodes_in_area_under_air(pos1, pos2, {"group:wall","group:tree","group:leaves","group:fence"})
 					nodes = cleanup(nodes)
 					
 					if nodes and #nodes > 0 then 
@@ -84,17 +84,20 @@ minetest.register_globalstep(spawnstep)
 function aerotest.lq_jump2vec(self,go)
 	
 	if not go then return true end
-	local length = vector.length(go)
-	mobkit.animate(self,"start")
+	local init = true
 	self.object:set_velocity(go)
 	
 	local function func(self) 
-		minetest.after(1,function(self)
+		
+		if init then
+			mobkit.animate(self,"start")
+		end
+		
 		local speed = vector.length(self.object:get_velocity())
-		if abs(speed) < 1 then
+		if abs(speed) < 1 and not init then
 			return true
 		end
-		end,self)
+		init=false
 		
 		
 	end
@@ -483,8 +486,10 @@ end
 
 function aerotest.hq_wayout(self,prty)
 	local func=function(self)
+		
 		if self.isinliquid then return true end
 		if mobkit.timer(self,1) then
+			self.action = "search"
 			if mobkit.is_queue_empty_low(self) and self.isonground then
 				local pos = mobkit.get_stand_pos(self)
 				pos.y = pos.y + 0.5
@@ -638,8 +643,10 @@ end,
 on_punch=function(self, puncher, time_from_last_punch, tool_capabilities, dir)
 		if mobkit.is_alive(self) then
             local obj = self.object
-            if not puncher or not puncher:is_player() or time_from_last_punch < 1 then return end
-            
+            if time_from_last_punch < 1 then return end
+            local hvel = vector.multiply(vector.normalize({x=dir.x,y=0,z=dir.z}),4)
+			self.object:set_velocity({x=hvel.x,y=2,z=hvel.z})
+                                           
 			mobkit.hurt(self,tool_capabilities.damage_groups.fleshy or 1)
 			
 			if water_life.radar_debug then
