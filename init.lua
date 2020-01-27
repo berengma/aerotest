@@ -19,11 +19,16 @@ local timetrgt = 30
 local spawntimer = 0
 
 
-aerotest.eagleminheight = 50
+aerotest.eagleminheight = 60
 aerotest.maxeagle = 2 -- max possible eagles at one time in AOSR
-aerotest.spawnchance = 20 -- spawnchance in percent
-aerotest.spawncheck_frequence = 10 -- each how many seconds us checked for as eagle to spawn
+aerotest.spawnchance = 50 -- spawnchance in percent
+aerotest.spawncheck_frequence = 30 -- each how many seconds is checked for an eagle to spawn
 
+if block_send_optimize_distance and block_send_optimize_distance < AOSR/16 then
+	AOSR = block_send_optimize_distance *16
+elseif max_block_send_distance and max_block_send_distance < AOSR/16 then
+	AOSR = max_block_send_distance *16
+end
 
 -- show temp marker
 local function temp_show(pos,time)
@@ -39,7 +44,11 @@ end
 local function cleanup(nodes)
 	if not nodes or #nodes<2 then return end
 	for i = #nodes,2,-1 do
-		if nodes[i].y >= nodes[i-1].y then table.remove(nodes,i-1) end
+		if nodes[i].y > nodes[i-1].y then
+			table.remove(nodes,i-1)
+		elseif nodes[i].y < nodes[i-1].y then
+			table.remove(nodes,i)
+		end
 	end
 	
 	for i = #nodes,1,-1 do
@@ -62,30 +71,35 @@ local function spawnstep(dtime)
         for _,plyr in ipairs(minetest.get_connected_players()) do
           local coin = math.random(100)
 		  if coin < aerotest.spawnchance then
-            if plyr and plyr:get_pos().y > aerotest.eagleminheight -16 and plyr:get_pos().y < 500 then	
-        
-                local pos = plyr:get_pos()
-                local yaw = plyr:get_look_horizontal()
-                local animal = water_life.count_objects(pos,nil,"aerotest:eagle")
+			  
+			  if plyr and plyr:get_pos().y > aerotest.eagleminheight and plyr:get_pos().y < 500 then
+				  local pos = plyr:get_pos()
+					local yaw = plyr:get_look_horizontal()
+					local animal = water_life.count_objects(pos,nil,"aerotest:eagle")
 				
-                if animal.name < aerotest.maxeagle and pos.y > aerotest.eagleminheight-16 then
-					local pos1 = mobkit.pos_shift(mobkit.pos_translate2d(pos,yaw+rad(55),8),{y= -10})
-					local pos2 = mobkit.pos_shift(mobkit.pos_translate2d(pos,yaw-rad(55),AOSR-8),{y= 10})
-					if water_life.radar_debug then
-						temp_show(pos1)
-						temp_show(pos2)
+					if animal.name < aerotest.maxeagle then
+						pos = mobkit.pos_translate2d(pos,yaw+rad(math.random(-55,55)),math.random(10,AOSR/2))
+						local spawnpos = {x=pos.x, y=pos.y + math.random(AOSR/2,AOSR), z=pos.z}
+						
+							local obj = minetest.add_entity(spawnpos, "aerotest:eagle")
+							if obj then
+								local self = obj:get_luaentity()
+								mobkit.clear_queue_high(self)
+								obj:set_yaw(yaw)
+								local velo=obj:getpos()
+								velo = vector.subtract(mobkit.pos_translate2d(velo,yaw,2),velo)
+								obj:set_velocity({x=velo.x, y=velo.y+3, z=velo.z})
+								aerotest.hq_climb(self,1)
+							end
+						
 					end
-					local nodes = minetest.find_nodes_in_area_under_air(pos1, pos2, {"group:wall","group:tree","group:leaves","group:fence"})
+			  end
+				
+			--[[
+            local nodes = minetest.find_nodes_in_area_under_air(pos1, pos2, {"group:wall","group:tree","group:leaves","group:fence"})
 					nodes = cleanup(nodes)
-					--if nodes then minetest.chat_send_all(dump(#nodes).." left") end
-					
-					if nodes and #nodes > 0 then 
-						local spawnpos = mobkit.pos_shift(nodes[math.random(#nodes)],{y=2})
-						local obj = minetest.add_entity(spawnpos, "aerotest:eagle")
-					end
-				end
-					
-			end
+					if nodes then minetest.chat_send_all(dump(#nodes).." left") end
+			]]
 		  end
         end
         spawntimer = 0
@@ -606,6 +620,7 @@ logic = function(self)
 	  
                                            
 	if mobkit.timer(self,1) then
+		
 		local pos = self.object:get_pos()
 		local plyr = mobkit.get_nearby_player(self)
 		if self.action == "idle" and plyr and vector.distance(pos,plyr:get_pos()) < 16 and not water_life.radar_debug then
