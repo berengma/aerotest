@@ -623,10 +623,11 @@ logic = function(self)
 		
 		local pos = self.object:get_pos()
 		local plyr = mobkit.get_nearby_player(self)
-		if self.action == "idle" and plyr and vector.distance(pos,plyr:get_pos()) < 16 and not water_life.radar_debug then
+		if self.action == "idle" and plyr and vector.distance(pos,plyr:get_pos()) < 8 and not water_life.radar_debug then
 			mobkit.clear_queue_low(self)
 			mobkit.clear_queue_high(self)
-			aerotest.hq_idle(self,10,true)
+			aerotest.hq_takeoff(self,rad(math.random(360)),10)    --panic takeoff
+			--aerotest.hq_idle(self,10,true)
 		end
 		if vector.length(self.object:get_velocity()) < 2 and self.action ~= "idle" and self.action ~= "search" then --[[self.object:remove() end]]
 			mobkit.clear_queue_low(self)
