@@ -349,6 +349,8 @@ function aerotest.hq_glide(self,prty)
 	mobkit.queue_high(self,func,prty)
 end
 
+
+--just hanging around
 function aerotest.hq_idle(self,prty,now)
 	local func = function(self)
 		if mobkit.timer(self,1) or now then
@@ -391,6 +393,8 @@ function aerotest.hq_idle(self,prty,now)
 	mobkit.queue_high(self,func,prty)
 end
 
+
+-- takeoff
 function aerotest.hq_takeoff(self,startangle,prty,yforce)
 	local func = function(self)
 		if not yforce then yforce = 8 end
@@ -424,6 +428,7 @@ function aerotest.hq_takeoff(self,startangle,prty,yforce)
 end
 
 
+--find a way out
 function aerotest.hq_wayout(self,prty)
 	local func=function(self)
 		
@@ -496,3 +501,44 @@ function aerotest.hq_wayout(self,prty)
 	mobkit.queue_high(self,func,prty)
 end
 
+
+function aerotest.look_for_prey(self)
+	local pos = mobkit.get_stand_pos(self)
+	local yaw = self.object:get_yaw()
+	local prey = minetest.get_objects_inside_radius(pos, aerotest.aosr/2)
+	--minetest.chat_send_all("RAW >>>"..dump(#prey))
+	if not prey or #prey < 1 then return nil end
+	
+	for i = #prey,1,-1 do
+		local tyaw = water_life.get_yaw_to_object(self,prey[i])
+		if tyaw > yaw +rad(55) or tyaw < yaw -rad(55) then table.remove(prey,i) end
+	end
+	if not prey then return nil end
+	
+	for i = #prey,1,-1 do
+		if prey[i]:is_player() then 
+			table.remove(prey,i)
+		else
+			local entity = prey[i]:get_luaentity()
+			if entity and entity.name ~= "wildlife:deer" then table.remove(prey,i) end
+		end
+	end
+	if not prey then return nil end
+	
+	for i = #prey,1,-1 do
+		local entity = prey[i]:get_luaentity()
+		--minetest.chat_send_all(dump(entity.name))
+		local tpos = prey[i]:get_pos()
+		local dist = vector.distance(pos,tpos)
+		if dist <20 or water_life.find_collision(pos,tpos,true) then table.remove(prey,i) end
+	end
+	if not prey or #prey < 1 then return nil end
+	
+	local badluck = prey[math.random(#prey)]
+	if water_life.radar_debug then
+		water_life.temp_show(badluck:get_pos())
+	end
+	return badluck
+
+end
+	

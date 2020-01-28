@@ -48,9 +48,12 @@ logic = function(self)
 		mobkit.hq_die(self)
 		return
 	end
+                                           
+	if mobkit.timer(self,2) then
+		aerotest.look_for_prey(self)
+	end
 	
 	  
-                                           
 	if mobkit.timer(self,1) then
 		local makesound = math.random(100)
 		if makesound < 5 then mobkit.make_sound(self,'cry') end
