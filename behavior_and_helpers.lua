@@ -14,7 +14,13 @@ local min = math.min
 local timetot = 0
 local timetrgt = 30
 
+aerotest.prey = {}
 
+
+function aerotest.register_prey(name)
+	if not name then return end
+	aerotest.prey[name] = 1
+end
 
 -- find the position with highest y value
 local function cleanup(nodes)
@@ -520,7 +526,7 @@ function aerotest.look_for_prey(self)
 			table.remove(prey,i)
 		else
 			local entity = prey[i]:get_luaentity()
-			if entity and entity.name ~= "wildlife:deer" then table.remove(prey,i) end
+			if entity and not aerotest.prey[entity.name] then table.remove(prey,i) end
 		end
 	end
 	if not prey then return nil end
@@ -530,15 +536,116 @@ function aerotest.look_for_prey(self)
 		--minetest.chat_send_all(dump(entity.name))
 		local tpos = prey[i]:get_pos()
 		local dist = vector.distance(pos,tpos)
-		if dist <20 or water_life.find_collision(pos,tpos,true) then table.remove(prey,i) end
+		if dist <30 or water_life.find_collision(pos,tpos,false) then table.remove(prey,i) end
 	end
 	if not prey or #prey < 1 then return nil end
 	
+	
 	local badluck = prey[math.random(#prey)]
-	if water_life.radar_debug then
-		water_life.temp_show(badluck:get_pos())
-	end
 	return badluck
 
 end
 	
+
+--hunting !
+function aerotest.hq_hunt(self,prty,tgt)
+
+	local func=function(self)
+		
+			if not tgt then
+				mobkit.clear_queue_high(self)
+				aerotest.hq_climb(self,prty)
+				return true
+			end
+			self.action = "hunt"
+			local roll = 0
+			local pos = self.object:get_pos()
+			local yaw = self.object:get_yaw()
+			local tgtpos = tgt:get_pos()
+			local tgtyaw = tgt:get_yaw()
+			local tgtspeed = math.floor(vector.length(tgt:get_velocity() or {x=0,y=0,z=0}))
+			if not tgtyaw or not tgtspeed or not mobkit.is_alive(tgt) or self.isonground or self.isinliquid then
+				mobkit.clear_queue_high(self)
+				aerotest.hq_climb(self,prty)
+				return true
+			end
+			local turn = 0
+			local diff = 0
+			local lift = 1.2
+			local pitch = 5
+			local acc = 0.6
+			local anim = "fly"
+			local truetpos=mobkit.pos_translate2d(tgtpos,tgtyaw,tgtspeed)
+			local ddistance = vector.distance(pos,{x=truetpos.x,y= pos.y, z=truetpos.z})
+			local alpha = atan((pos.y - truetpos.y)/ ddistance)
+			local truetyaw = minetest.dir_to_yaw(vector.subtract(truetpos,pos))
+			local realdistance = vector.distance(pos,tgtpos)
+			local ang2tgt = mobkit.pos_translate2d(pos,truetyaw,15)
+			
+			if yaw < truetyaw then 
+				diff = truetyaw - yaw
+				turn = -1
+			elseif yaw > truetyaw then
+				diff = yaw - truetyaw
+				turn = 1
+			end
+			if abs(diff) <= 0.1 then
+				turn = 0
+			end
+			
+			
+			if ddistance > 32 then
+				roll = 15 * turn
+			elseif ddistance > 22 then
+				roll = 10 * turn
+			elseif ddistance > 12 then
+				roll = 5 * turn
+			elseif ddistance <= 12 then
+				roll = 2 * turn
+			end
+			
+			
+			if pos.y > truetpos.y +15 then
+				anim = "glide"
+				pitch = -8
+				acc = 0.8
+			end
+			
+			if water_life.radar_debug then
+				water_life.temp_show(ang2tgt,1)
+				for i = 1,10,1 do
+					water_life.temp_show({x=truetpos.x, y=truetpos.y+i*2, z=truetpos.z},1)
+				end
+				--minetest.chat_send_all("Alpha= "..dump(alpha)..", Hight= "..dump(math.floor(pos.y)).." ###"..dump(yaw).."###   hityaw="..dump(truetyaw))
+				--minetest.chat_send_all("distance ="..dump(math.floor(ddistance*100)/100).."   Alpha ="..dump(math.floor(deg(alpha)*100)/100))
+				--minetest.chat_send_all("distance2prey ="..dump(vector.distance(pos,tgtpos)))
+			end
+               
+				mobkit.clear_queue_low(self)
+				
+				if ddistance < 25 and deg(alpha) > 35 then
+					if realdistance > 1.5 then
+						aerotest.lq_fly_aoa(self,0,deg(alpha),roll,3.2,'glide')
+					
+					elseif realdistance <= 1.5 then
+						self.object:set_velocity({x=0,y=0,z=0})
+					end
+						
+				else
+					aerotest.lq_fly_pitch(self,lift,pitch,roll,acc,anim)
+				end
+				
+				if realdistance <= 1.5 then
+					local ent = tgt:get_luaentity()
+					if water_life.radar_debug then minetest.chat_send_all("***GOTCHA***") end
+					mobkit.hurt(ent,1000)
+					mobkit.heal(self,100)
+					mobkit.clear_queue_high(self)
+					mobkit.clear_queue_low(self)
+					return true
+				end
+
+		
+	end
+	mobkit.queue_high(self,func,prty)
+end

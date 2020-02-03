@@ -49,8 +49,15 @@ logic = function(self)
 		return
 	end
                                            
-	if mobkit.timer(self,2) then
-		aerotest.look_for_prey(self)
+	if mobkit.timer(self,aerotest.hunt_intervall) and aerotest.hunter then
+		if self.action == "fly" or self.action == "glide" then
+			local gotone = aerotest.look_for_prey(self)
+			if gotone then
+				mobkit.clear_queue_low(self)
+				mobkit.clear_queue_high(self)
+				aerotest.hq_hunt(self,1,gotone)
+			end
+		end
 	end
 	
 	  
