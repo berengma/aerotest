@@ -40,3 +40,15 @@ minetest.register_chatcommand("eagle", {
 		return true
 	end
 })
+
+
+--chatcommand to show what is on eagle'e menu today
+minetest.register_chatcommand("eagle_prey", {
+	params = "",
+	description = "show what an eagle likes to hunt",
+	privs = {server = true},
+	func = function(name)
+		minetest.chat_send_player(name, dump(aerotest.prey))
+	end
+})
+
