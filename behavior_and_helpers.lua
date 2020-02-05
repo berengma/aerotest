@@ -1,7 +1,7 @@
 
 local pi = math.pi
 local abs = math.abs
-local random = math.random
+local random = water_life.random   --math.random
 local rad= math.rad
 local deg=math.deg
 local tan = math.tan
@@ -369,7 +369,7 @@ function aerotest.hq_idle(self,prty,now)
 			local found = false
 			local pos2 = {}
 			mobkit.animate(self,"idle")
-			local wait = math.random(10) + 5
+			local wait = random(10) + 5
 			
 			if mobkit.timer(self,wait) or now then
 				found,startangle,pos2 = aerotest.find_takeoff(self)
@@ -541,7 +541,7 @@ function aerotest.look_for_prey(self)
 	if not prey or #prey < 1 then return nil end
 	
 	
-	local badluck = prey[math.random(#prey)]
+	local badluck = prey[random(#prey)]
 	return badluck
 
 end

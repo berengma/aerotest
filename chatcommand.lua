@@ -52,3 +52,13 @@ minetest.register_chatcommand("eagle_prey", {
 	end
 })
 
+minetest.register_chatcommand("rnd", {
+	params = "",
+	description = "test rnd numgen",
+	privs = {server = true},
+	func = function(name)
+		for i = 1,100,1 do
+			minetest.chat_send_player(name, dump(water_life.random()))
+		end
+	end
+})

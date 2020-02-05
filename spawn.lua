@@ -1,5 +1,7 @@
 local spawntimer = 0
 local rad = math.rad
+local random = water_life.random
+
 
 -- spawn function
 function aerotest.spawnstep(dtime)
@@ -8,7 +10,7 @@ function aerotest.spawnstep(dtime)
     if spawntimer > aerotest.spawncheck_frequence then
         
         for _,plyr in ipairs(minetest.get_connected_players()) do
-          local coin = math.random(100)
+          local coin = random(100)
 		  if coin < aerotest.spawnchance then
 			  
 			  if plyr and plyr:get_pos().y > aerotest.eagleminheight and plyr:get_pos().y < 500 then
@@ -17,8 +19,8 @@ function aerotest.spawnstep(dtime)
 					local animal = water_life.count_objects(pos,nil,"aerotest:eagle")
 				
 					if animal.name < aerotest.maxeagle then
-						pos = mobkit.pos_translate2d(pos,yaw+rad(math.random(-55,55)),math.random(10,aerotest.aosr/2))
-						local spawnpos = {x=pos.x, y=pos.y + math.random(aerotest.aosr/2,aerotest.aosr), z=pos.z}
+						pos = mobkit.pos_translate2d(pos,yaw+rad(random(-55,55)),random(10,aerotest.aosr/2))
+						local spawnpos = {x=pos.x, y=pos.y + random(aerotest.aosr/2,aerotest.aosr), z=pos.z}
 						
 							local obj = minetest.add_entity(spawnpos, "aerotest:eagle")
 							if obj then

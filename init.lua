@@ -10,7 +10,7 @@ elseif max_block_send_distance and max_block_send_distance < aerotest.aosr/16 th
 end
 
 aerotest.hunter = true				-- false to turn off hunting of prey
-aerotest.hunt_intervall = 180		-- hunting intervall in seconds (only checking no prey, no hunt)
+aerotest.hunt_intervall = 90		-- hunting intervall in seconds (only checking no prey, no hunt)
 aerotest.eagleminheight = 60		-- eagles start spawning when player is higher than this
 aerotest.maxeagle = 2 				-- max possible eagles at one time in aerotest.aosr
 aerotest.spawnchance = 50 			-- spawnchance in percent
@@ -34,6 +34,7 @@ dofile(path.."/spawn.lua")
 --prey of wildlife mod
 if minetest.get_modpath("wildlife") then
 	aerotest.register_prey("wildlife:deer")
+	aerotest.register_prey("wildlife:deer_tamed")
 end
 
 
