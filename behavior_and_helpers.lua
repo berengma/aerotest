@@ -267,6 +267,8 @@ end
 -- back to my code
 -- hq functions self explaining
 function aerotest.hq_climb(self,prty)
+	self.hunger = self.hunger -1
+	
 	local func=function(self)
 		if mobkit.timer(self,1) then
 			local remember = mobkit.recall(self,"time")
@@ -314,6 +316,8 @@ function aerotest.hq_climb(self,prty)
 end
 
 function aerotest.hq_glide(self,prty)
+	self.hunger = self.hunger - 0.5
+	
 	local func = function(self)
 		if mobkit.timer(self,1) then
 			self.action = "glide"
@@ -402,6 +406,8 @@ end
 
 -- takeoff
 function aerotest.hq_takeoff(self,startangle,prty,yforce)
+	self.hunger = self.hunger - 2
+	
 	local func = function(self)
 		if not yforce then yforce = 8 end
 		self.object:set_yaw(startangle)
@@ -517,7 +523,7 @@ function aerotest.look_for_prey(self)
 	
 	for i = #prey,1,-1 do
 		local tyaw = water_life.get_yaw_to_object(self,prey[i])
-		if tyaw > yaw +rad(55) or tyaw < yaw -rad(55) then table.remove(prey,i) end
+		if tyaw > yaw +rad(90) or tyaw < yaw -rad(90) then table.remove(prey,i) end
 	end
 	if not prey then return nil end
 	
@@ -536,7 +542,7 @@ function aerotest.look_for_prey(self)
 		--minetest.chat_send_all(dump(entity.name))
 		local tpos = prey[i]:get_pos()
 		local dist = vector.distance(pos,tpos)
-		if dist <30 or water_life.find_collision(pos,tpos,false) then table.remove(prey,i) end
+		if dist < 20 or water_life.find_collision(pos,tpos,false) then table.remove(prey,i) end
 	end
 	if not prey or #prey < 1 then return nil end
 	
@@ -549,6 +555,7 @@ end
 
 --hunting !
 function aerotest.hq_hunt(self,prty,tgt)
+	self.hunger = self.hunger - 2
 
 	local func=function(self)
 		
@@ -624,6 +631,7 @@ function aerotest.hq_hunt(self,prty,tgt)
 				mobkit.clear_queue_low(self)
 				
 				if ddistance < 25 and deg(alpha) > 35 then
+					mobkit.make_sound(self,'cry')
 					if realdistance > 1.5 then
 						aerotest.lq_fly_aoa(self,0,deg(alpha),roll,3.2,'glide')
 					
@@ -640,6 +648,7 @@ function aerotest.hq_hunt(self,prty,tgt)
 					if water_life.radar_debug then minetest.chat_send_all("***GOTCHA***") end
 					mobkit.hurt(ent,1000)
 					mobkit.heal(self,100)
+					self.hunger = 100
 					mobkit.clear_queue_high(self)
 					mobkit.clear_queue_low(self)
 					return true
