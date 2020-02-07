@@ -1,7 +1,17 @@
 local rad = math.rad
+local random = water_life.random
 
 
+local function update_nametag(self)
+	if not self then return end
+	self.object:set_nametag_attributes({
+					color = '#ff7373',
+					text = tostring(math.floor(self.hp)).."%hp "..tostring(math.floor(self.hunger)).."%st",
+					})
+end
 
+	
+	
 -- the eagle itself
 minetest.register_entity('aerotest:eagle',{
 
@@ -17,6 +27,8 @@ minetest.register_entity('aerotest:eagle',{
 	static_save = true, 
 	view_range = aerotest.aosr,
 	max_hp = 100,
+	hunger = 100,
+	xhaust = 100,
 	max_speed = 1,
 	jump_height = 2,
     owner = "",                                       
@@ -40,8 +52,11 @@ on_activate=mobkit.actfunc,
 get_staticdata = mobkit.statfunc,                                          
 
 logic = function(self)
-	
-	if self.hp <= 0 then	
+                                           
+	if not self.hunger then self.hunger=  100 end
+	if not self.xhaust then self.xhaust=  100 end
+
+	if self.hp <= 0 or self.hunger <= -25 then	
 		mobkit.clear_queue_high(self)
         water_life.handle_drops(self)
         --mobkit.make_sound(self,"death")
@@ -62,14 +77,27 @@ logic = function(self)
 	
 	  
 	if mobkit.timer(self,1) then
-		local makesound = math.random(100)
-		if makesound < 5 then mobkit.make_sound(self,'cry') end
+		
+		if (random(100) > self.hunger) and aerotest.hunter then
+			local gotone = aerotest.look_for_prey(self)
+			if gotone then
+				mobkit.clear_queue_low(self)
+				mobkit.clear_queue_high(self)
+				aerotest.hq_hunt(self,1,gotone)
+			end
+		end
+                                           
+		if water_life.radar_debug then
+				update_nametag(self)
+			end
+		
+		if random(100) < 5 then mobkit.make_sound(self,'cry') end
 		local pos = self.object:get_pos()
 		local plyr = mobkit.get_nearby_player(self)
 		if self.action == "idle" and plyr and vector.distance(pos,plyr:get_pos()) < 8 and not water_life.radar_debug then
 			mobkit.clear_queue_low(self)
 			mobkit.clear_queue_high(self)
-			aerotest.hq_takeoff(self,rad(math.random(360)),10)    --panic takeoff
+			aerotest.hq_takeoff(self,rad(random(360)),10)    --panic takeoff
 			--aerotest.hq_idle(self,10,true)
 		end
 		if vector.length(self.object:get_velocity()) < 2 and self.action ~= "idle" and self.action ~= "search" then --[[self.object:remove() end]]
@@ -78,14 +106,11 @@ logic = function(self)
 			--minetest.chat_send_all(dump(self.action))
 			mobkit.hurt(self,5)
 			if water_life.radar_debug then
-				self.object:set_nametag_attributes({
-					color = '#ff7373',
-					text = tostring(math.floor(self.hp)).."%",
-					})
+				update_nametag(self)
 			end
 			aerotest.hq_idle(self,1)
 		end
-                                           
+        
 	end
 	if mobkit.is_queue_empty_high(self) then 
 		if self.action == "idle" then
@@ -100,6 +125,7 @@ logic = function(self)
 		else
 			aerotest.hq_climb(self,1)
 		end
+										
 	end
 end,
                                            
@@ -113,14 +139,11 @@ on_punch=function(self, puncher, time_from_last_punch, tool_capabilities, dir)
 			mobkit.hurt(self,tool_capabilities.damage_groups.fleshy or 1)
 			
 			if water_life.radar_debug then
-				obj:set_nametag_attributes({
-					color = '#ff7373',
-					text = tostring(math.floor(self.hp)).."%",
-					})
+				update_nametag(obj)
 			end
 			if self.isonground or self.isinliquid then
 				mobkit.clear_queue_high(self)
-				aerotest.hq_takeoff(self,rad(math.random(360)),20,6)
+				aerotest.hq_takeoff(self,rad(random(360)),20,6)
 			end
 		end
 	end,                                           
