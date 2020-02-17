@@ -78,7 +78,22 @@ logic = function(self)
 	  
 	if mobkit.timer(self,1) then
 		
-		if (random(100) > self.hunger) and aerotest.hunter then
+		if self.action == "fly" or self.action == "glide" then
+			local player = mobkit.get_nearby_player(self)
+			if player and player:is_player() then
+				local center = player:get_pos()
+				local eagle = self.object:get_pos()
+				center.y = eagle.y
+				--minetest.chat_send_all("%%%   "..dump(math.floor(vector.distance(center,eagle))).."   "..dump(math.floor(water_life.abo*0.5*16)))
+				if vector.distance(center,eagle) > (water_life.abo*0.75*16) then
+					mobkit.clear_queue_low(self)
+					mobkit.clear_queue_high(self)
+					aerotest.hq_keepinrange(self,10,center)
+				end
+			end
+		end
+                                           
+		if (random(100) > self.hunger) and aerotest.hunter and not self.action == "range" then
 			local gotone = aerotest.look_for_prey(self)
 			if gotone then
 				mobkit.clear_queue_low(self)
