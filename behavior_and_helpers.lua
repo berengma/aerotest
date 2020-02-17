@@ -285,7 +285,7 @@ function aerotest.hq_climb(self,prty)
 			
 			local left, right, up, down, under, above = water_life.radar(pos,yaw,32,true)
 			
-			if  (down < 3) and (under >= 25) then 
+			if  (down < 3) and (under >= 30) then 
 				aerotest.hq_glide(self,prty)
 				return true
 			end
@@ -332,7 +332,7 @@ function aerotest.hq_glide(self,prty)
 			local pos = self.object:get_pos()
 			local yaw = self.object:get_yaw()
             local left, right, up, down, under, above = water_life.radar(pos,yaw,32,true)
-			if  (down > 15) or (under < 10) then 
+			if  (down > 15) or (under < 20) then 
 				aerotest.hq_climb(self,prty)
 				return true
 			end
@@ -355,6 +355,67 @@ function aerotest.hq_glide(self,prty)
 		end	
 	if mobkit.timer(self,20) then mobkit.clear_queue_low(self) end
 	if mobkit.is_queue_empty_low(self) then aerotest.lq_fly_pitch(self,0.6,-4,(random(2)-1.5)*30,0,'glide') end
+	end
+	mobkit.queue_high(self,func,prty)
+end
+
+
+function aerotest.hq_keepinrange(self,prty,pos)
+	self.hunger = self.hunger - 0.5
+	
+	local func = function(self)
+		if mobkit.timer(self,1) then
+			self.action = "range"
+            local turn = false
+			local mobpos = self.object:get_pos()
+			pos.y = mobpos.y
+			local yaw = self.object:get_yaw()
+			local dir = vector.subtract(pos,mobpos)
+			local tgtyaw = minetest.dir_to_yaw(dir)
+			local diff = 0
+			if yaw < tgtyaw then 
+				diff = tgtyaw - yaw
+				turn = true
+			elseif yaw > tgtyaw then
+				diff = yaw - tgtyaw
+				turn = false
+			end
+			local distance = math.floor(vector.distance(pos,mobpos))
+			local left, right, up, down, under, above = water_life.radar(mobpos,yaw,32,true)
+			turn = chose_turn(self,left,right)
+			local lift = 0.6
+			local pitch = 2
+			local roll = 15
+			local acc = 1.0
+			if left < 12 and right < 12 then 
+				if diff > 2 then 
+					roll = 15
+				elseif diff > 1 and diff <= 2 then
+					roll = 10
+				elseif diff > 0.5 and diff <= 1 then
+					roll = 5
+				elseif diff <= 0.5 then 
+					roll=0
+				end
+				if tgtyaw > yaw then turn = true else turn = false end
+			end
+			
+			--minetest.chat_send_all(">>> yaw = "..dump(yaw).." tgtyaw = "..dump(tgtyaw).."    diff = "..dump(diff).."   roll = "..dump(roll).." <<<")
+			
+			if turn then
+				mobkit.clear_queue_low(self)
+				aerotest.lq_fly_pitch(self,lift,pitch,roll*-1,acc,'glide')
+			else 
+				mobkit.clear_queue_low(self)
+				aerotest.lq_fly_pitch(self,lift,pitch,roll,acc,'glide')
+			end
+            
+			if distance < water_life.abo*16/4 then
+				aerotest.hq_climb(self,1)
+				return true
+			end
+		end	
+	
 	end
 	mobkit.queue_high(self,func,prty)
 end
