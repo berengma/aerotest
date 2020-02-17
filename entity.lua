@@ -85,7 +85,7 @@ logic = function(self)
 				local eagle = self.object:get_pos()
 				center.y = eagle.y
 				--minetest.chat_send_all("%%%   "..dump(math.floor(vector.distance(center,eagle))).."   "..dump(math.floor(water_life.abo*0.5*16)))
-				if vector.distance(center,eagle) > (water_life.abo*0.75*16) then
+				if vector.distance(center,eagle) > (water_life.abo*0.5*16) then
 					mobkit.clear_queue_low(self)
 					mobkit.clear_queue_high(self)
 					aerotest.hq_keepinrange(self,10,center)
