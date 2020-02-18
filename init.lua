@@ -1,10 +1,11 @@
 aerotest = {}
 
-aerotest.bsod = minetest.settings:get('block_send_optimize_distance') or nil
-aerotest.mbsd = minetest.settings:get('max_block_send_distance') or nil
 
 aerotest.aosr = water_life.abo*16
 aerotest.abr = water_life.abr*16
+
+aerotest.bsod = tonumber(minetest.settings:get('block_send_optimize_distance')) or water_life.abo
+aerotest.mbsd = tonumber(minetest.settings:get('max_block_send_distance')) or water_life.abo
 
 if aerotest.bsod and aerotest.bsod < aerotest.aosr/16 then
 	aerotest.aosr = aerotest.bsod *16

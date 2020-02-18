@@ -25,7 +25,7 @@ minetest.register_entity('aerotest:eagle',{
 	timeout=300,	-- 24h
 	buoyancy = 0.7,
 	static_save = true, 
-	view_range = aerotest.aosr,
+	view_range = water_life.abr*32,
 	max_hp = 100,
 	hunger = 100,
 	xhaust = 100,
@@ -84,8 +84,8 @@ logic = function(self)
 				local center = player:get_pos()
 				local eagle = self.object:get_pos()
 				center.y = eagle.y
-				--minetest.chat_send_all("%%%   "..dump(math.floor(vector.distance(center,eagle))).."   "..dump(math.floor(water_life.abo*0.5*16)))
-				if vector.distance(center,eagle) > (water_life.abo*0.5*16) then
+				--minetest.chat_send_all("%%%   "..dump(math.floor(vector.distance(center,eagle))).."   "..dump(math.floor(water_life.abr*16*0.75)))
+				if vector.distance(center,eagle) > (water_life.abr*16) then
 					mobkit.clear_queue_low(self)
 					mobkit.clear_queue_high(self)
 					aerotest.hq_keepinrange(self,10,center)
