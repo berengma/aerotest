@@ -1,12 +1,16 @@
 aerotest = {}
 
 
-aerotest.aosr = minetest.settings:get('active_object_send_range_blocks')*16
+aerotest.aosr = water_life.abo*16
 aerotest.abr = water_life.abr*16
-if block_send_optimize_distance and block_send_optimize_distance < aerotest.aosr/16 then
-	aerotest.aosr = block_send_optimize_distance *16
-elseif max_block_send_distance and max_block_send_distance < aerotest.aosr/16 then
-	aerotest.aosr = max_block_send_distance *16
+
+aerotest.bsod = tonumber(minetest.settings:get('block_send_optimize_distance')) or water_life.abo
+aerotest.mbsd = tonumber(minetest.settings:get('max_block_send_distance')) or water_life.abo
+
+if aerotest.bsod and aerotest.bsod < aerotest.aosr/16 then
+	aerotest.aosr = aerotest.bsod *16
+elseif aerotest.mbsd and aerotest.mbsd < aerotest.aosr/16 then
+	aerotest.aosr = aerotest.mbsd *16
 end
 
 aerotest.hunter = true				-- false to turn off hunting of prey
