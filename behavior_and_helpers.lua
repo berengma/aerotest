@@ -367,6 +367,7 @@ function aerotest.hq_keepinrange(self,prty,pos,radius)
 	local func = function(self)
 		if mobkit.timer(self,1) then
 			self.action = "range"
+			local diff = 0
             local turn = false
 			local mobpos = self.object:get_pos()
 			pos.y = mobpos.y
