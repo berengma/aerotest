@@ -361,7 +361,7 @@ end
 
 
 function aerotest.hq_keepinrange(self,prty,pos,radius)
-	if not radius then radius = water_life.abo*16 end
+	if not radius then radius = water_life.abr*16 end
 	self.hunger = self.hunger - 0.5
 	
 	local func = function(self)
@@ -578,11 +578,12 @@ function aerotest.look_for_prey(self)
 	--minetest.chat_send_all("RAW >>>"..dump(#prey))
 	if not prey or #prey < 1 then return nil end
 	
+	--[[ 
 	for i = #prey,1,-1 do
 		local tyaw = water_life.get_yaw_to_object(self,prey[i])
 		if tyaw > yaw +rad(90) or tyaw < yaw -rad(90) then table.remove(prey,i) end
 	end
-	if not prey then return nil end
+	if not prey then return nil end]]
 	
 	for i = #prey,1,-1 do
 		if prey[i]:is_player() then 
