@@ -3,7 +3,7 @@ local random = water_life.random
 
 
 local function update_nametag(self)
-	if not self then return end
+	if not self or not self.object then return end
 	self.object:set_nametag_attributes({
 					color = '#ff7373',
 					text = tostring(math.floor(self.hp)).."%hp "..tostring(math.floor(self.hunger)).."%st",
@@ -25,7 +25,7 @@ minetest.register_entity('aerotest:eagle',{
 	timeout=300,	-- 24h
 	buoyancy = 0.7,
 	static_save = true, 
-	view_range = water_life.abr*32,
+	view_range = water_life.abr*32,                                        -- 32 because mobkit's self.near_objects only checks until half self.view_range !!!
 	max_hp = 100,
 	hunger = 100,
 	xhaust = 100,
@@ -37,8 +37,8 @@ minetest.register_entity('aerotest:eagle',{
 		{name = "water_life:meat_raw", chance = 2, min = 1, max = 2,},
 	},                                       
 	animation = {
-        idle={range={x=0,y=89},speed=20,loop=true},	
-        start={range={x=90,y=127},speed=40,loop=true},
+        idle={range={x=0,y=89},speed=10,loop=true},	
+        start={range={x=90,y=127},speed=20,loop=true},
         land={range={x=142,y=90},speed=-10,loop=false},
 		fly={range={x=143,y=163},speed=20,loop=true},	
 		glide={range={x=165,y=185},speed=20,loop=true},
@@ -84,29 +84,34 @@ logic = function(self)
 				local center = player:get_pos()
 				local eagle = self.object:get_pos()
 				center.y = eagle.y
-				--minetest.chat_send_all("%%%   "..dump(math.floor(vector.distance(center,eagle))).."   "..dump(math.floor(water_life.abr*16*0.75)))
-				if vector.distance(center,eagle) > (water_life.abr*16) then
+				--minetest.chat_send_all("%%%   "..dump(math.floor(vector.distance(center,eagle))).."   "..dump(math.floor(water_life.abr*16-10)))
+				if vector.distance(center,eagle) > (water_life.abr*16-10) then
 					mobkit.clear_queue_low(self)
 					mobkit.clear_queue_high(self)
 					aerotest.hq_keepinrange(self,10,center)
 				end
+            
 			end
 		end
-                                           
-		if (random(100) > self.hunger) and aerotest.hunter and not self.action == "range" then
+        
+        local meal = random(100)
+        --minetest.chat_send_all(dump(aerotest.hunter).."   "..dump(meal).."     "..dump(self.hunger))
+		if (meal > self.hunger) and aerotest.hunter then --and not self.action == "range" then
 			local gotone = aerotest.look_for_prey(self)
+            --minetest.chat_send_all(dump(gotone))
 			if gotone then
 				mobkit.clear_queue_low(self)
 				mobkit.clear_queue_high(self)
-				aerotest.hq_hunt(self,1,gotone)
+				aerotest.hq_hunt(self,10,gotone)
 			end
 		end
                                            
 		if water_life.radar_debug then
 				update_nametag(self)
-			end
+        end
 		
-		if random(100) < 5 then mobkit.make_sound(self,'cry') end
+                                           
+		if random(100) < 2 then mobkit.make_sound(self,'cry') end
 		local pos = self.object:get_pos()
 		local plyr = mobkit.get_nearby_player(self)
 		if self.action == "idle" and plyr and vector.distance(pos,plyr:get_pos()) < 8 and not water_life.radar_debug then

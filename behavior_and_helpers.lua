@@ -16,7 +16,6 @@ local timetrgt = 30
 
 aerotest.prey = {}
 
-
 function aerotest.register_prey(name)
 	if not name then return end
 	aerotest.prey[name] = 1
@@ -361,7 +360,7 @@ end
 
 
 function aerotest.hq_keepinrange(self,prty,pos,radius)
-	if not radius then radius = water_life.abo*16 end
+	if not radius then radius = water_life.abo*16-8 end
 	self.hunger = self.hunger - 0.5
 	
 	local func = function(self)
@@ -574,7 +573,7 @@ end
 function aerotest.look_for_prey(self)
 	local pos = mobkit.get_stand_pos(self)
 	local yaw = self.object:get_yaw()
-	local prey = minetest.get_objects_inside_radius(pos, aerotest.aosr/2)
+	local prey = minetest.get_objects_inside_radius(pos, aerotest.abr)
 	--minetest.chat_send_all("RAW >>>"..dump(#prey))
 	if not prey or #prey < 1 then return nil end
 	
