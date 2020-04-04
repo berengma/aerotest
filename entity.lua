@@ -53,8 +53,8 @@ get_staticdata = mobkit.statfunc,
 
 logic = function(self)
                                            
-	if not self.hunger then self.hunger=  100 end
-	if not self.xhaust then self.xhaust=  100 end
+	self.hunger = mobkit.recall(self,"hunger") or 100
+	self.xhaust = mobkit.recall(self,"xhaust") or 100
 
 	if self.hp <= 0 or self.hunger <= -25 then	
 		mobkit.clear_queue_high(self)
@@ -130,6 +130,9 @@ logic = function(self)
 			end
 			aerotest.hq_idle(self,1)
 		end
+
+	mobkit.remember(self,"hunger",self.hunger)
+	mobkit.remember(self,"xhaust",self.xhaust)
         
 	end
 	if mobkit.is_queue_empty_high(self) then 
