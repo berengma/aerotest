@@ -13,12 +13,12 @@ elseif aerotest.mbsd and aerotest.mbsd < aerotest.aosr/16 then
 	aerotest.aosr = aerotest.mbsd *16
 end
 
-aerotest.hunter = true				-- false to turn off hunting of prey
-aerotest.hunt_intervall = 90		-- hunting intervall in seconds (only checking no prey, no hunt)
-aerotest.eagleminheight = 60		-- eagles start spawning when player is higher than this
-aerotest.maxeagle = 2 				-- max possible eagles at one time in aerotest.aosr
-aerotest.spawnchance = 50 			-- spawnchance in percent
-aerotest.spawncheck_frequence = 30	-- each how many seconds is checked for an eagle to spawn
+aerotest.hunter = true					-- false to turn off hunting of prey
+aerotest.hunt_intervall = 90				-- hunting intervall in seconds (only checking no prey, no hunt)
+aerotest.eagleminheight = 60				-- eagles start spawning when player is higher than this
+aerotest.maxeagle = 2 					-- max possible eagles at one time in aerotest.aosr
+aerotest.spawnchance = 10 				-- spawnchance in percent
+aerotest.spawncheck_frequence = 30			-- each how many seconds is checked for an eagle to spawn
 
 math.randomseed(os.time()) --init random seed
 

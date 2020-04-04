@@ -16,7 +16,6 @@ local timetrgt = 30
 
 aerotest.prey = {}
 
-
 function aerotest.register_prey(name)
 	if not name then return end
 	aerotest.prey[name] = 1
@@ -268,7 +267,8 @@ end
 -- hq functions self explaining
 function aerotest.hq_climb(self,prty)
 	self.hunger = self.hunger -1
-	
+	mobkit.remember(self,"hunger",self.hunger)
+	mobkit.remember(self,"xhaust",self.xhaust)
 	local func=function(self)
 		if mobkit.timer(self,1) then
 			local remember = mobkit.recall(self,"time")
@@ -285,7 +285,7 @@ function aerotest.hq_climb(self,prty)
 			
 			local left, right, up, down, under, above = water_life.radar(pos,yaw,32,true)
 			
-			if  (down < 3) and (under >= 25) then 
+			if  (down < 3) and (under >= 30) then 
 				aerotest.hq_glide(self,prty)
 				return true
 			end
@@ -317,7 +317,8 @@ end
 
 function aerotest.hq_glide(self,prty)
 	self.hunger = self.hunger - 0.5
-	
+	mobkit.remember(self,"hunger",self.hunger)
+	mobkit.remember(self,"xhaust",self.xhaust)
 	local func = function(self)
 		if mobkit.timer(self,1) then
 			self.action = "glide"
@@ -332,7 +333,7 @@ function aerotest.hq_glide(self,prty)
 			local pos = self.object:get_pos()
 			local yaw = self.object:get_yaw()
             local left, right, up, down, under, above = water_life.radar(pos,yaw,32,true)
-			if  (down > 15) or (under < 10) then 
+			if  (down > 15) or (under < 20) then 
 				aerotest.hq_climb(self,prty)
 				return true
 			end
@@ -363,7 +364,8 @@ end
 function aerotest.hq_keepinrange(self,prty,pos,radius)
 	if not radius then radius = water_life.abr*16 end
 	self.hunger = self.hunger - 0.5
-	
+	mobkit.remember(self,"hunger",self.hunger)
+	mobkit.remember(self,"xhaust",self.xhaust)
 	local func = function(self)
 		if mobkit.timer(self,1) then
 			self.action = "range"
@@ -464,7 +466,8 @@ end
 -- takeoff
 function aerotest.hq_takeoff(self,startangle,prty,yforce)
 	self.hunger = self.hunger - 2
-	
+	mobkit.remember(self,"hunger",self.hunger)
+	mobkit.remember(self,"xhaust",self.xhaust)
 	local func = function(self)
 		if not yforce then yforce = 8 end
 		self.object:set_yaw(startangle)
@@ -574,7 +577,7 @@ end
 function aerotest.look_for_prey(self)
 	local pos = mobkit.get_stand_pos(self)
 	local yaw = self.object:get_yaw()
-	local prey = minetest.get_objects_inside_radius(pos, aerotest.aosr/2)
+	local prey = minetest.get_objects_inside_radius(pos, aerotest.abr)
 	--minetest.chat_send_all("RAW >>>"..dump(#prey))
 	if not prey or #prey < 1 then return nil end
 	
@@ -614,7 +617,8 @@ end
 --hunting !
 function aerotest.hq_hunt(self,prty,tgt)
 	self.hunger = self.hunger - 2
-
+	mobkit.remember(self,"hunger",self.hunger)
+	mobkit.remember(self,"xhaust",self.xhaust)
 	local func=function(self)
 		
 			if not tgt then
@@ -689,7 +693,7 @@ function aerotest.hq_hunt(self,prty,tgt)
 				mobkit.clear_queue_low(self)
 				
 				if ddistance < 25 and deg(alpha) > 35 then
-					mobkit.make_sound(self,'cry')
+					--mobkit.make_sound(self,'cry')
 					if realdistance > 1.5 then
 						aerotest.lq_fly_aoa(self,0,deg(alpha),roll,3.2,'glide')
 					
@@ -702,11 +706,14 @@ function aerotest.hq_hunt(self,prty,tgt)
 				end
 				
 				if realdistance <= 1.5 then
+					mobkit.make_sound(self,'cry')
 					local ent = tgt:get_luaentity()
 					if water_life.radar_debug then minetest.chat_send_all("***GOTCHA***") end
 					mobkit.hurt(ent,1000)
 					mobkit.heal(self,100)
 					self.hunger = 100
+					mobkit.remember(self,"hunger",self.hunger)
+					mobkit.remember(self,"xhaust",self.xhaust)
 					mobkit.clear_queue_high(self)
 					mobkit.clear_queue_low(self)
 					return true

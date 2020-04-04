@@ -19,8 +19,8 @@ function aerotest.spawnstep(dtime)
 					local animal = water_life.count_objects(pos,nil,"aerotest:eagle")
 				
 					if animal.name < aerotest.maxeagle then
-						pos = mobkit.pos_translate2d(pos,yaw+rad(random(-55,55)),random(10,aerotest.aosr/2))
-						local spawnpos = {x=pos.x, y=pos.y + random(aerotest.aosr/2,aerotest.aosr), z=pos.z}
+						pos = mobkit.pos_translate2d(pos,yaw+rad(random(-55,55)),random(10,aerotest.abr))
+						local spawnpos = {x=pos.x, y=pos.y + random(aerotest.abr/2,aerotest.abr), z=pos.z}
 						
 							local obj = minetest.add_entity(spawnpos, "aerotest:eagle")
 							if obj then
