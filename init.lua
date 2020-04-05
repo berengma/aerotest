@@ -31,6 +31,12 @@ dofile(path.."/entity.lua")
 dofile(path.."/behavior_and_helpers.lua")
 dofile(path.."/spawn.lua")
 
+
+--are there bows and arrows ?
+if minetest.get_modpath("rcbows") then
+	aerotest.arrows = true
+end
+
 --aerotest.register_prey("water_life:fish")         -- no hunting of watermobs sofar
 --aerotest.register_prey("water_life:fish_tamed")
 
