@@ -18,7 +18,7 @@ minetest.register_entity('aerotest:eagle',{
 	physical = true,
 	collisionbox = {-0.3,0,-0.3,0.3,0.8,0.3},
 	visual = "mesh",
-	visual_size = {x = 3, y = 3},
+	visual_size = {x = 2, y = 2},
 	mesh = "aerotest_eagle.b3d",
 	textures = {"aerotest_eagle.png"},
 	makes_footstep_sound = false,
@@ -55,6 +55,17 @@ logic = function(self)
                                            
 	self.hunger = mobkit.recall(self,"hunger") or 100
 	self.xhaust = mobkit.recall(self,"xhaust") or 100
+                                           
+	if (self.action == "fly" or self.action == "glide") and aerotest.arrows then
+		local eagle = self.object:get_pos()
+		local attacker = aerotest.find_attacker(eagle,3)
+		if attacker then
+			--minetest.chat_send_all("I am coming to you "..attacker:get_player_name())
+			mobkit.clear_queue_low(self)
+			mobkit.clear_queue_high(self)
+			aerotest.hq_hunt(self,50,attacker)
+		end
+	end
 
 	if self.hp <= 0 or self.hunger <= -25 then	
 		mobkit.clear_queue_high(self)

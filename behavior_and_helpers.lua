@@ -16,6 +16,31 @@ local timetrgt = 30
 
 aerotest.prey = {}
 
+function aerotest.find_attacker(pos,radius)
+
+	if not radius then radius = 5 end
+
+	local all_objects = minetest.get_objects_inside_radius(pos, radius)
+	if #all_objects == 0 then
+		return nil
+	end
+
+	local _,obj
+	for _,obj in ipairs(all_objects) do
+		local entity = obj:get_luaentity()
+			
+		if entity and string.match(entity.name, "arrow") then
+			local shooter = entity.shooter_name
+			if shooter then
+				--minetest.chat_send_all(shooter.." tried to shoot an eagle")
+				local attacker = minetest.get_player_by_name(shooter)
+				return attacker
+			end
+		end
+	end
+end
+
+
 function aerotest.register_prey(name)
 	if not name then return end
 	aerotest.prey[name] = 1
@@ -297,8 +322,8 @@ function aerotest.hq_climb(self,prty)
                 --roll = (max(left,right)/30 *3)+(down/100)*3+roll
 				roll = (max(left,right)/30 * 7.5)
 				lift = lift + (down - up) /400
-				pitch = pitch + (down - up) /400
---                lift = lift + (down/200) - (up/200)
+				pitch = pitch + (down - up) /30
+				--lift = lift + (down/100) - (up/100)
                 local turn = chose_turn(self,left,right)
                 if turn then
                     mobkit.clear_queue_low(self)
@@ -333,7 +358,7 @@ function aerotest.hq_glide(self,prty)
 			local pos = self.object:get_pos()
 			local yaw = self.object:get_yaw()
             local left, right, up, down, under, above = water_life.radar(pos,yaw,32,true)
-			if  (down > 15) or (under < 20) then 
+			if  (down > 10) or (under < 20) then 
 				aerotest.hq_climb(self,prty)
 				return true
 			end
@@ -633,6 +658,10 @@ function aerotest.hq_hunt(self,prty,tgt)
 			local tgtpos = tgt:get_pos()
 			local tgtyaw = tgt:get_yaw()
 			local tgtspeed = math.floor(vector.length(tgt:get_velocity() or {x=0,y=0,z=0}))
+			if tgt:is_player() then
+				tgtyaw = tgt:get_look_horizontal()
+			end
+			--minetest.chat_send_all(dump(tgtpos).." "..dump(tgtyaw).." "..dump(tgtspeed))
 			if not tgtyaw or not tgtspeed or not mobkit.is_alive(tgt) or self.isonground or self.isinliquid then
 				mobkit.clear_queue_high(self)
 				aerotest.hq_climb(self,prty)
@@ -709,6 +738,7 @@ function aerotest.hq_hunt(self,prty,tgt)
 					mobkit.make_sound(self,'cry')
 					local ent = tgt:get_luaentity()
 					if water_life.radar_debug then minetest.chat_send_all("***GOTCHA***") end
+					if tgt:is_player() then tgt:set_hp(0) end
 					mobkit.hurt(ent,1000)
 					mobkit.heal(self,100)
 					self.hunger = 100
