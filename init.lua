@@ -54,6 +54,7 @@ if minetest.get_modpath("petz") then
 	aerotest.register_prey("petz:puppy")
 	aerotest.register_prey("petz:ducky")
 	aerotest.register_prey("petz:lamb")
+	aerotest.register_prey("petz:goat")
 	aerotest.register_prey("petz:calf")
 	aerotest.register_prey("petz:chicken")
 	aerotest.register_prey("petz:piggy")
