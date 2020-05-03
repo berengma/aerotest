@@ -395,7 +395,7 @@ function aerotest.hq_keepinrange(self,prty,pos,radius)
 		if mobkit.timer(self,1) then
 			self.action = "range"
 			local diff = 0
-            local turn = false
+			local turn = false
 			local mobpos = self.object:get_pos()
 			pos.y = mobpos.y
 			local yaw = self.object:get_yaw()+pi
@@ -414,7 +414,7 @@ function aerotest.hq_keepinrange(self,prty,pos,radius)
 			
 			local lift = 0.6
 			local pitch = 2
-			local roll = 25
+			local roll = 35
 			local acc = 0.6
 			--local heading = mobkit.pos_translate2d(mobpos,yaw,10)
 			--local togo = mobkit.pos_translate2d(mobpos,tgtyaw,5)
@@ -517,7 +517,7 @@ function aerotest.hq_takeoff(self,startangle,prty,yforce)
 				end
 			end
 			
-			aerotest.lq_fly_pitch(self,1.8,25,0,1.4,'fly')
+			aerotest.lq_fly_pitch(self,1.8,15,0,1.4,'fly')
 			--aerotest.lq_fly_aoa(self,0.6,15,0,2.4,'fly')
 		end
 	end

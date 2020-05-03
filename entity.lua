@@ -37,9 +37,9 @@ minetest.register_entity('aerotest:eagle',{
 		{name = "water_life:meat_raw", chance = 2, min = 1, max = 2,},
 	},                                       
 	animation = {
-        idle={range={x=0,y=89},speed=10,loop=true},	
-        start={range={x=90,y=127},speed=20,loop=true},
-        land={range={x=142,y=90},speed=-10,loop=false},
+		idle={range={x=0,y=89},speed=10,loop=true},	
+		start={range={x=90,y=127},speed=20,loop=true},
+		land={range={x=142,y=90},speed=-10,loop=false},
 		fly={range={x=143,y=163},speed=20,loop=true},	
 		glide={range={x=165,y=185},speed=20,loop=true},
 		},
