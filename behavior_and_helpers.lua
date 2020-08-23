@@ -446,7 +446,11 @@ end
 
 --just hanging around
 function aerotest.hq_idle(self,prty,now)
+	local init = true
+	
 	local func = function(self)
+		if init then mobkit.animate(self,"idle") end
+		
 		if mobkit.timer(self,1) or now then
 			self.action = "idle"
             
@@ -456,7 +460,7 @@ function aerotest.hq_idle(self,prty,now)
 			local startangle = 0
 			local found = false
 			local pos2 = {}
-			mobkit.animate(self,"idle")
+			
 			local wait = random(10) + 5
 			
 			if mobkit.timer(self,wait) or now then
@@ -483,6 +487,7 @@ function aerotest.hq_idle(self,prty,now)
 				end
 			end
 		end
+		init = false
 	end
 	mobkit.queue_high(self,func,prty)
 end
