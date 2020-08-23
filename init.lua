@@ -39,6 +39,7 @@ end
 
 --aerotest.register_prey("water_life:fish")         -- no hunting of watermobs sofar
 --aerotest.register_prey("water_life:fish_tamed")
+aerotest.register_prey("water_life:snake")
 
 
 --prey of wildlife mod

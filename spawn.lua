@@ -18,7 +18,7 @@ function aerotest.spawnstep(dtime)
 					local yaw = plyr:get_look_horizontal()
 					local animal = water_life.count_objects(pos,nil,"aerotest:eagle")
 				
-					if animal.name < aerotest.maxeagle then
+					if not animal["areotest:eagle"] or animal["areotest:eagle"] < aerotest.maxeagle then
 						pos = mobkit.pos_translate2d(pos,yaw+rad(random(-55,55)),random(10,aerotest.abr))
 						local spawnpos = {x=pos.x, y=pos.y + random(aerotest.abr/2,aerotest.abr), z=pos.z}
 						
@@ -36,11 +36,6 @@ function aerotest.spawnstep(dtime)
 					end
 			  end
 				
-			--[[
-            local nodes = minetest.find_nodes_in_area_under_air(pos1, pos2, {"group:wall","group:tree","group:leaves","group:fence"})
-					nodes = cleanup(nodes)
-					if nodes then minetest.chat_send_all(dump(#nodes).." left") end
-			]]
 		  end
         end
         spawntimer = 0

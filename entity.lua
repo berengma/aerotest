@@ -24,7 +24,7 @@ minetest.register_entity('aerotest:eagle',{
 	makes_footstep_sound = false,
 	timeout=300,	-- 24h
 	buoyancy = 0.7,
-	static_save = true, 
+	static_save = false, 
 	view_range = water_life.abr*32,                                        -- 32 because mobkit's self.near_objects only checks until half self.view_range !!!
 	max_hp = 100,
 	hunger = 100,
