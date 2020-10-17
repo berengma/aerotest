@@ -1,6 +1,7 @@
 aerotest = {}
 
 
+
 aerotest.aosr = water_life.abo*16
 aerotest.abr = water_life.abr*16
 
@@ -18,7 +19,7 @@ aerotest.hunt_intervall = 90				-- hunting intervall in seconds (only checking n
 aerotest.eagleminheight = 60				-- eagles start spawning when player is higher than this
 aerotest.maxeagle = 2 					-- max possible eagles at one time in aerotest.aosr
 aerotest.spawnchance = 10 				-- spawnchance in percent
-aerotest.spawncheck_frequence = 30			-- each how many seconds is checked for an eagle to spawn
+aerotest.spawncheck_frequence = 60			-- each how many seconds is checked for an eagle to spawn
 
 math.randomseed(os.time()) --init random seed
 
@@ -40,6 +41,8 @@ end
 --aerotest.register_prey("water_life:fish")         -- no hunting of watermobs sofar
 --aerotest.register_prey("water_life:fish_tamed")
 aerotest.register_prey("water_life:snake")
+aerotest.register_prey("water_life:beaver")
+aerotest.register_prey("water_life:gecko")
 
 
 --prey of wildlife mod
