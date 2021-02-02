@@ -22,7 +22,7 @@ minetest.register_entity('aerotest:eagle',{
 	mesh = "aerotest_eagle.b3d",
 	textures = {"aerotest_eagle.png"},
 	makes_footstep_sound = false,
-	timeout=300,	-- 24h
+	timeout=-5,	-- 24h
 	buoyancy = 0.7,
 	static_save = false, 
 	view_range = water_life.abr*32,                                        -- 32 because mobkit's self.near_objects only checks until half self.view_range !!!
@@ -88,6 +88,8 @@ logic = function(self)
 	
 	  
 	if mobkit.timer(self,1) then
+                                           
+		
 		
 		if self.action == "fly" or self.action == "glide" then
 			local player = mobkit.get_nearby_player(self)
