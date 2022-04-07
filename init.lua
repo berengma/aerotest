@@ -1,9 +1,7 @@
 aerotest = {}
 
-
-
-aerotest.aosr = water_life.abo*16
-aerotest.abr = water_life.abr*16
+aerotest.aosr = water_life.abo * 16
+aerotest.abr = water_life.abr * 16
 
 aerotest.bsod = tonumber(minetest.settings:get('block_send_optimize_distance')) or water_life.abo
 aerotest.mbsd = tonumber(minetest.settings:get('max_block_send_distance')) or water_life.abo
@@ -14,12 +12,12 @@ elseif aerotest.mbsd and aerotest.mbsd < aerotest.aosr/16 then
 	aerotest.aosr = aerotest.mbsd *16
 end
 
-aerotest.hunter = true					-- false to turn off hunting of prey
-aerotest.hunt_intervall = 90				-- hunting intervall in seconds (only checking no prey, no hunt)
-aerotest.eagleminheight = 60				-- eagles start spawning when player is higher than this
-aerotest.maxeagle = 2 					-- max possible eagles at one time in aerotest.aosr
-aerotest.spawnchance = 10 				-- spawnchance in percent
-aerotest.spawncheck_frequence = 60			-- each how many seconds is checked for an eagle to spawn
+aerotest.hunter = true		-- false to turn off hunting of prey
+aerotest.hunt_intervall = 90	-- hunting intervall in seconds (only checking no prey, no hunt)
+aerotest.eagleminheight = 60	-- eagles start spawning when player is higher than this
+aerotest.maxeagle = 2 		-- max possible eagles at one time in aerotest.aosr
+aerotest.spawnchance = 10	-- spawnchance in percent
+aerotest.spawncheck_frequence = 60	-- each how many seconds is checked for an eagle to spawn
 
 math.randomseed(os.time()) --init random seed
 
@@ -38,7 +36,7 @@ if minetest.get_modpath("rcbows") then
 	aerotest.arrows = true
 end
 
---aerotest.register_prey("water_life:fish")         -- no hunting of watermobs sofar
+--aerotest.register_prey("water_life:fish")         -- no hunting of watermobs so far
 --aerotest.register_prey("water_life:fish_tamed")
 aerotest.register_prey("water_life:snake")
 aerotest.register_prey("water_life:beaver")
